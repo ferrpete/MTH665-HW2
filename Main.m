@@ -20,19 +20,18 @@ for i = 1:N
     
     [FemSol, x] = SimpleFEM1D(n(i));
     ExactSol = Exact(x');
+    dExactSol = pi.*cos(pi.*x');
     errorMax(i) = norm(ExactSol-FemSol, inf);
     errorL2(i) = sqrt(Simpson13Approx(n(i),x,(ExactSol-FemSol).^2));
     fL2(i) = sqrt(Simpson13Approx(n(i),x,Loadf(x).^2));
-    dError(1) = 0;
     
     for j = 2:length(FemSol)
         
-        dError(j) = ((ExactSol(j) - FemSol(j)) -...
-            (ExactSol(j-1) - FemSol(j-1)))/(x(j) - x(j-1));
+        dError(j-1) = ((FemSol(j) - FemSol(j-1))/(x(j) - x(j-1))) - dExactSol(j-1);
         
     end
     
-    errorE(i) = sqrt(Simpson13Approx(n(i),x,dError.^2));
+    errorE(i) = sqrt(Simpson13Approx(n(i),x(2:end),dError.^2));
     plot(x,FemSol,'-o')
     
 end
@@ -45,10 +44,10 @@ legend('Exact', 'h = 0.5', 'h = 0.25', 'h = 0.125')
 hold off
 
 figure(2)
-loglog(h,h.^2,'k-',h,errorMax,'*-r',h,errorL2,'*-b',h,errorE,'*-c')
+loglog(h,h,'k--',h,h.^2,'k-',h,errorMax,'*-r',h,errorL2,'*-b',h,errorE,'*-c')
 xlabel('Mesh size, h', 'Interpreter', 'latex')
 ylabel('Error, e(h)', 'Interpreter', 'latex')
-legend({'Quadratic', '$\max_i |u(x_i)-u_k(x_i)|$', '$\left \| u - u_k \right \|_{L^2}$', '$\left \| u - u_k \right \|_E$'}, 'Interpreter', 'latex')
+legend({'Linear', 'Quadratic', '$\max_i |u(x_i)-u_k(x_i)|$', '$\left \| u - u_k \right \|_{L^2}$', '$\left \| u - u_k \right \|_E$'}, 'Interpreter', 'latex')
 legend('Location', 'southeast')
 
 figure(3)
